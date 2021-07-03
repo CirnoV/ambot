@@ -79,8 +79,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     cache::fill(client.data.clone(), &prefix, &bot_id).await?;
 
-    notifier::start_listening(client.data.clone(), client.cache_and_http.http.clone());
-    steam::start_polling(client.data.clone(), client.cache_and_http.clone(), commands::gdc::on_update);
+    let api_host = env::var("API_HOST").unwrap_or(String::from("127.0.0.1"));
+    steam::start_polling(api_host, client.data.clone(), client.cache_and_http.clone(), commands::gdc::on_update);
 
     if let Err(why) = client.start_autosharded().await {
         error!("Client error: {:?}", why);

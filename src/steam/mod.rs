@@ -37,7 +37,7 @@ impl GameVersionManager {
     }
 }
 
-pub fn start_polling<F: 'static, Fut>(data: Arc<RwLock<TypeMap>>, http : Arc<CacheAndHttp>, on_update: F)
+pub fn start_polling<F: 'static, Fut>(api_host: String, data: Arc<RwLock<TypeMap>>, http : Arc<CacheAndHttp>, on_update: F)
     where
         F: Fn(Arc<RwLock<TypeMap>>, Arc<CacheAndHttp>, u64, App) -> Fut + Send + Sync,
         Fut: Future<Output = ()> + Send,
@@ -50,10 +50,18 @@ pub fn start_polling<F: 'static, Fut>(data: Arc<RwLock<TypeMap>>, http : Arc<Cac
             let apps : Vec<String> = n.get_apps().iter().map(|&id| id.to_string()).collect();
 
             let apps_str = apps.join(",");
-            let endpoint = format!("http://127.0.0.1:23455/info?apps={}", apps_str);
+            let endpoint = format!("http://{}:23455/info?apps={}", api_host, apps_str);
 
             let response = client.get(&endpoint).send().await.unwrap();
-            let results = response.json::<PicsResponse>().await.unwrap();
+            let results = match response.json::<PicsResponse>().await {
+                Ok(result) => result,
+                Err(err) => {
+                    error!("{}", err);
+                    info!("Retrying in 5 seconds...");
+                    tokio::time::delay_for(core::time::Duration::new(5, 0)).await;
+                    continue;
+                },
+            };
             for (k, v) in results.apps {
                 let id = k.parse::<u64>().unwrap();
 
