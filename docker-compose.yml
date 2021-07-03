@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  steam-pics-api:
+    image: steam-pics-api
+    build:
+      context: https://github.com/CirnoV/steam-pics-api.git
+    ports:
+      - "23455:23455"
+    restart: always
+  ambot:
+    image: ambot
+    build: .
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      BOT_PREFIX: ${BOT_PREFIX}
+      PLUGIN_CHANNEL: ${PLUGIN_CHANNEL}
+      RUST_LOG: ambot
+      API_HOST: steam-pics-api
+    depends_on:
+      - steam-pics-api
+    restart: always
