@@ -2,7 +2,6 @@ mod cache;
 mod commands;
 mod events;
 mod utls;
-mod notifier;
 mod parser;
 mod steam;
 
